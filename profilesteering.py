@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import operator
-
+import time
 from crypto import HE
 
 
@@ -49,6 +49,7 @@ class ProfileSteering():
     def iterative(self, e_min, max_iters):
         # Iterative Loop
         for i in range(0, max_iters):  # Note we deviate here slightly by also definint a maximum number of iterations
+            t1 = time.time()
             # Init
             best_improvement = 0
             best_device = None
@@ -71,8 +72,9 @@ class ProfileSteering():
 
                 # Decrypt the encrypted sum and set the value of x
                 self._get_decrypt()
-
-            print("Iteration", i, "-- Winner", best_device, "Improvement", best_improvement)
+            t2 = time.time()
+            time_diff = t2 - t1
+            print("Iteration", i, "-- Winner", best_device, "Improvement", best_improvement, "Time", round(time_diff, 5))
             # print("Overall Profile", self.x)
 
             # Now check id the improvement is good enough
