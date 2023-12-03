@@ -15,6 +15,7 @@
 import opt.optAlg
 import numpy as np
 import operator
+from crypto import HE
 
 class Battery():
 	def __init__(self):
@@ -34,7 +35,7 @@ class Battery():
 		# Create an initial planning. 
 		# Since we do not know what the rest of the appliances do, we can just fill it with zeroes:
 		self.profile = [0]*len(p) 
-		return list(self.profile)
+		return HE.encryptFrac(np.array(self.profile, dtype=np.float64))
 			
 	def plan(self, d): 
 		# desired is "d" in the PS paper
@@ -69,6 +70,6 @@ class Battery():
 		# We are chosen as winner, replace the profile:
 		diff = list(map(operator.sub, self.candidate, self.profile))
 		self.profile = list(self.candidate)
-		
+
 		# Note we can send the difference profile only as incremental update
-		return diff
+		return HE.encryptFrac(np.array(diff, dtype=np.float64))
