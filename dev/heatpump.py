@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import opt.optAlg
-import numpy as np
 import operator
 import random
+import numpy as np
+import opt.optAlg
 
+from dev.abstract_device import AbstractDevice
 from crypto import HE
+from Pyfhel import PyCtxt
 
 
-class HeatPump():
+class HeatPump(AbstractDevice):
     def __init__(self):
         self.profile = []  # x_m in the PS paper
         self.candidate = []  # ^x_m in the PS paper
@@ -34,7 +36,7 @@ class HeatPump():
         # Importing the optimization library
         self.opt = opt.optAlg.OptAlg()
 
-    def init(self, p):
+    def init(self, p: list[float]) -> PyCtxt:
         # Heat demand
         # We create a random list of power values, but it can be any list
         self.heatdemand = []
@@ -52,7 +54,7 @@ class HeatPump():
 
         return HE.encryptFrac(np.array(self.profile, dtype=np.float64))
 
-    def plan(self, d):
+    def plan(self, d: list[float]) -> float:
         # desired is "d" in the PS paper
         p_m = list(map(operator.sub, self.profile, d))  # p_m = x_m - d
 
@@ -81,7 +83,7 @@ class HeatPump():
         # print("Improvement: ", self, e_m)
         return e_m
 
-    def accept(self):
+    def accept(self) -> PyCtxt | None:
         # We are chosen as winner, replace the profile:
         diff = list(map(operator.sub, self.candidate, self.profile))
         self.profile = list(self.candidate)

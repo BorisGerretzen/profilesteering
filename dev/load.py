@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import random
 import operator
+import random
 import numpy as np
 
+from Pyfhel import PyCtxt
+from dev.abstract_device import AbstractDevice
 from crypto import HE
 
 
-class Load():
+class Load(AbstractDevice):
     def __init__(self):
         self.profile = []  # x_m in the PS paper
         self.candidate = []  # ^x_m in the PS paper
@@ -27,7 +29,7 @@ class Load():
         # Device specific params
         self.max = 5000
 
-    def init(self, p):
+    def init(self, p: list[float]) -> PyCtxt:
         # Create a baseload for a given number of intervals
         self.profile = []  # Empty the profile
 
@@ -37,7 +39,7 @@ class Load():
 
         return HE.encryptFrac(np.array(self.profile, dtype=np.float64))
 
-    def plan(self, d):
+    def plan(self, d: list[float]) -> float:
         assert (len(d) == len(self.profile))
         p_m = list(map(operator.sub, self.profile, d))  # p_m = x_m - d
 
@@ -53,6 +55,6 @@ class Load():
         # print("Improvement: ", self, e_m)
         return e_m
 
-    def accept(self):
+    def accept(self) -> PyCtxt | None:
         # We are chosen as winner, replace the profile:
         self.profile = list(self.candidate)

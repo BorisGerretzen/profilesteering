@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import operator
-from functools import reduce
 
 from crypto import HE
 
