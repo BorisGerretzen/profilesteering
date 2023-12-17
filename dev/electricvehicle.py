@@ -64,7 +64,7 @@ class ElectricVehicle(AbstractDevice):
         self.plan(p)  # Create an initial plan
         self.accept()  # Accept it, such that self.profile is set
 
-        return HE.encryptFrac(np.array(self.profile, dtype=np.float64))
+        return self.calculate_private_representation(self.profile)
 
     # Receiving a plan request from the Profile Steering algorithm
     def plan(self, d: list[float]) -> float:
@@ -124,4 +124,4 @@ class ElectricVehicle(AbstractDevice):
         self.profile = list(self.candidate)
 
         # Note we can send the difference profile only as incremental update
-        return HE.encryptFrac(np.array(diff, dtype=np.float64))
+        return diff

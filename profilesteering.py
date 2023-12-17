@@ -14,23 +14,58 @@
 
 import operator
 import time
-from crypto import HE
+
+import Pyfhel
+
+from crypto import HE, PrivacySchemes, PRIVACY_SCHEME
 
 
-class ProfileSteering():
+def _get_sum(profiles: list) -> list[float]:
+    """
+    Get the sum of the profiles
+    :type profiles: list[Pyfhel.PyCtxt] | list[list[float]]
+    :param profiles: list of profiles
+    :return: sum of the profiles
+    """
+    if PRIVACY_SCHEME == PrivacySchemes.HOMOMORPHIC:
+        if not isinstance(profiles[0], Pyfhel.PyCtxt):
+            raise TypeError("Profiles must be a list of Pyfhel.PyCtxt when using homomorphic encryption")
+        return sum(profiles)
+    elif PRIVACY_SCHEME == PrivacySchemes.DIFFERENTIAL:
+        if not isinstance(profiles[0], tuple) or not isinstance(profiles[0][0], list) or not isinstance(profiles[0][0][0], float):
+            raise TypeError("Profiles must be a nested list of floats when using differential privacy")
+        real_sum = list(map(sum, zip(*[profile[1] for profile in profiles])))
+        noisy_sum = list(map(sum, zip(*[profile[0] for profile in profiles])))
+
+        # plot the real sum and the noisy sum
+        import matplotlib.pyplot as plt
+        plt.plot(real_sum, label="real sum")
+        plt.plot(noisy_sum, label="noisy sum")
+        plt.plot(list(map(operator.sub, real_sum, noisy_sum)), label="difference")
+
+        plt.legend()
+        plt.show()
+
+        return noisy_sum
+
+
+class ProfileSteering:
     def __init__(self, devices):
         self.encrypted_sum = None
         self.devices = devices
         self.p = []  # p in the PS paper
         self.x = []  # x in the PS paper
 
-    def _get_decrypt(self) -> None:
+    def _decrypt_sum(self) -> list[float]:
         """
         Decrypt the encrypted sum and set the value of x
         :return: None
         """
-        # we have to trim the decrypted sum to the length of p because CKKS pads it to 2**13
-        self.x = list(HE.decrypt(self.encrypted_sum)[:len(self.p)])
+        if PRIVACY_SCHEME == PrivacySchemes.HOMOMORPHIC:
+            # we have to trim the decrypted sum to the length of p because CKKS pads it to 2**13
+            return list(HE.decrypt(self.encrypted_sum)[:len(self.p)])
+        elif PRIVACY_SCHEME == PrivacySchemes.DIFFERENTIAL:
+            return self.encrypted_sum
 
     def init(self, p):
         # Set the desired profile and reset xrange
@@ -38,11 +73,9 @@ class ProfileSteering():
         self.x = [0] * len(p)
 
         # Ask all devices to propose an initial planning
-        # In a real setup this would be done by the adder
-        self.encrypted_sum = sum([device.init(p) for device in self.devices])
-
-        # Receive the encrypted sum from the adder and decrypt
-        self._get_decrypt()
+        initial_profiles = [device.init(p) for device in self.devices]
+        self.encrypted_sum = _get_sum(initial_profiles)
+        self.x = self._decrypt_sum()
 
         return self.x
 
@@ -67,11 +100,8 @@ class ProfileSteering():
             # Now set the winner (best scoring device) and update the planning
             if best_device is not None:
                 diff = best_device.accept()
-                # Update the encrypted sum, once again in a real setup this would be done by the adder
-                self.encrypted_sum = self.encrypted_sum + diff
+                self.x = list(map(operator.sub, self.x, diff))
 
-                # Decrypt the encrypted sum and set the value of x
-                self._get_decrypt()
             t2 = time.time()
             time_diff = t2 - t1
             print("Iteration", i, "-- Winner", best_device, "Improvement", best_improvement, "Time", round(time_diff, 5))

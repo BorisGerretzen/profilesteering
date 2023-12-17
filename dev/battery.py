@@ -17,7 +17,6 @@ import numpy as np
 import opt.optAlg
 
 from dev.abstract_device import AbstractDevice
-from crypto import HE
 from Pyfhel import PyCtxt
 
 
@@ -35,11 +34,11 @@ class Battery(AbstractDevice):
         # Importing the optimization library
         self.opt = opt.optAlg.OptAlg()
 
-    def init(self, p: list[float]) -> PyCtxt:
+    def init(self, p: list[float]) -> PyCtxt | list[float]:
         # Create an initial planning.
         # Since we do not know what the rest of the appliances do, we can just fill it with zeroes:
         self.profile = [0] * len(p)
-        return HE.encryptFrac(np.array(self.profile, dtype=np.float64))
+        return self.calculate_private_representation(self.profile)
 
     def plan(self, d: list[float]) -> float:
         # desired is "d" in the PS paper
@@ -70,10 +69,10 @@ class Battery(AbstractDevice):
         # print("Improvement: ", self, e_m)
         return e_m
 
-    def accept(self) -> PyCtxt | None:
+    def accept(self) -> PyCtxt | list[float] | None:
         # We are chosen as winner, replace the profile:
         diff = list(map(operator.sub, self.candidate, self.profile))
         self.profile = list(self.candidate)
 
         # Note we can send the difference profile only as incremental update
-        return HE.encryptFrac(np.array(diff, dtype=np.float64))
+        return diff

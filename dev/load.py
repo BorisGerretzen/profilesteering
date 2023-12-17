@@ -37,7 +37,7 @@ class Load(AbstractDevice):
         for i in range(0, len(p)):
             self.profile.append(self.max * random.random())
 
-        return HE.encryptFrac(np.array(self.profile, dtype=np.float64))
+        return self.calculate_private_representation(self.profile)
 
     def plan(self, d: list[float]) -> float:
         assert (len(d) == len(self.profile))

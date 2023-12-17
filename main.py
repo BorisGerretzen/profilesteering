@@ -44,19 +44,19 @@ max_iters = 100  # maximum number of iterations
 # Create the model:
 
 # Add some baseloads
-for i in range(0, 10):
+for i in range(0, 20):
     devices.append(Load())
 
 # Add some batteries
-for i in range(0, 10):
+for i in range(0, 20):
     devices.append(Battery())
 
 # Add some EVs
-for i in range(0, 10):
+for i in range(0, 20):
     devices.append(ElectricVehicle())
 
 # Add some Heatpumps
-for i in range(0, 10):
+for i in range(0, 20):
     devices.append(HeatPump())
 
 # Run the Profile Steering algorithm
